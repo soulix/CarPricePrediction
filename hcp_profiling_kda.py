@@ -23,7 +23,8 @@ import pandas as pd #import pandas
 import matplotlib.pyplot as plt #eda
 from scipy import stats #imputing missing values
 import seaborn as sns # the commonly used alias for seaborn is sns
-
+from sklearn.model_selection import train_test_split
+import calendar
 
 
 ######### Business Understanding #############
@@ -104,17 +105,23 @@ cols_num = ['patients_treated_with_competitive_drug','patients_treated_with_sell
                            'percentage_territory_actual_sales','territory_quota','target_sales_quota',
                            'territory_quota_attainment']
 mendel[cols_num] = mendel[cols_num].apply(pd.to_numeric, errors='coerce', axis=1)
+#cols_cat = ['rep_id','health_grp','account_name','account_relation','injection_potential','pal','competitive_situation','clinical_mindset','value_perception']
+#converting to date time object and extracting month and weekdays
 mendel.input_timestamp =  pd.to_datetime(mendel.input_timestamp)
+mendel['month'] = mendel['input_timestamp'].dt.month
+mendel['month']= mendel['month'].apply(lambda x: calendar.month_abbr[x])
+mendel['day'] = mendel['input_timestamp'].dt.weekday_name
+
 mendel.info()
 #since strings data types have variable length, it is by default stored as object dtype. If you want to store them as string type, you can do something like this.
-#cols_cat = ['rep_id','health_grp','account_name','account_relation','injection_potential','pal','competitive_situation','clinical_mindset','value_perception']
+#cols_cat = ['account_relation','injection_potential','pal','competitive_situation','clinical_mindset','value_perception']
+
 #converting all the categorical values in data frame to lower case
 mendel = mendel.apply(lambda x: x.str.lower() if(x.dtype == 'object') else x)
 
 #checking for duplicate observations and droping duplicates
 dup_med = mendel.duplicated() #will return a sereis of boolean
 mendel = mendel.drop_duplicates()
-
 
 #removing a particular pattern of string in Product_Adoption_Ladder
 mendel['pal'] = mendel['pal'].str.split('(').str[0]
@@ -195,6 +202,21 @@ mendel["patients_treated_with_selling_drug"].describe()
 mendel["patients_treated_with_selling_drug"] = mendel["patients_treated_with_selling_drug"].ffill().bfill()
 mendel.isnull().sum()
 
+
+#market share in account
+sns.boxplot(mendel['market_share_in_account']) #no outlier
+centile(mendel,'market_share_in_account') 
+mendel["market_share_in_account"].describe()
+
+#percentage_territory_potential_sales
+sns.boxplot(mendel['percentage_territory_potential_sales']) 
+centile(mendel,'percentage_territory_potential_sales') 
+mendel["patients_treated_with_selling_drug"] = np.where(mendel["patients_treated_with_selling_drug"] > 86 , 86 , mendel["patients_treated_with_selling_drug"])
+mendel["patients_treated_with_selling_drug"].describe()
+mendel["patients_treated_with_selling_drug"] = mendel["patients_treated_with_selling_drug"].ffill().bfill()
+mendel.isnull().sum()
+
+
 #accout_relation
 ##handeling missing values  with mode.
 
@@ -269,6 +291,8 @@ plot_cat('pal')
 plot_cat('competitive_situation')
 plot_cat('clinical_mindset')
 plot_cat('value_perception')
+plot_cat('month')
+plot_cat('day')
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #lets define a User defined Fnction to plot actual_sales across numeric variables
@@ -308,17 +332,78 @@ sns.pairplot(cor)
 plt.show()
 
 
-#mendel.to_csv("mendel_final_dataset.csv", index = False)
 
-mendel['pal'] = mendel['pal'].map(lambda x: x.lstrip('(-').rstrip('aAbBcC'))
+############# ReScaling , Sampling and Dummy variables creation and feature selection for model#####################################
+
+#--------------------------------------------------------------------------------------------------------------------------------
+#defining a normalisation function : ReScaling
+def normalize (x): 
+    return ( (x-np.mean(x))/ (np.max(x) - np.min(x)))
+
+#--------------------------------------------------------------------------------------------------------------------------------                                                                                   
+#selecting numerics columns only
+cols_num_scaled = ['patients_treated_with_competitive_drug','patients_treated_with_selling_drug',
+                        'competitive_drug_market_penitration','total_potential_value','target_sales','market_share_in_account','percentage_territory_potential_sales',
+                           'percentage_territory_actual_sales','territory_quota','target_sales_quota',
+                           'territory_quota_attainment']
+num_mendel = mendel.loc[:,cols_num_scaled]
+# Normalizing and standadization of numeric variables
+num_mendel = num_mendel.apply(normalize)
+
+#selecting catgorical  variables
+cols_cat = ['account_relation','injection_potential','pal','competitive_situation','clinical_mindset','value_perception','month','day']
+cat_mendel = mendel.loc[:,cols_cat]
+#Creating dummy varibles for categorical variables
+
+# we can use drop_first = True to drop the first column from status dataframe.
+cat_mendel_dummy = pd.get_dummies(cat_mendel,drop_first=True)
+
+#creating the final data set which wre going to throw to the model
+#adding dummy data frames of categorical varibles and normilized data frames of numeric varibles
+mendel_final_df = pd.concat([cat_mendel_dummy,num_mendel,mendel['actual_sales']],axis=1)
+mendel_final_df.info()
+
+#mendel_final_df.to_csv("mendel_final_df.csv", index = False)
+
+#spliting the data set into test and train
+#random_state is the seed used by the random number generator, it can be any integer.
+# Putting feature variables to X
+X = mendel_final_df.loc[:, mendel_final_df.columns !='actual_sales' ]
+# Putting dependent or response  variable to y
+y = mendel_final_df['actual_sales']
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7 ,test_size = 0.3, random_state= 81)
 
 
 
+###################### Model Building ############################
 
-#--------------------------------------------------------------------------------------------------
+import statsmodels.api as sm          # Importing statsmodels
+X_train = sm.add_constant(X_train)    # Adding a constant column to our dataframe
+# create a first fitted model
+lm_1 = sm.OLS(y_train,X_train).fit()
+
+#Let's see the summary of our first linear model
+print(lm_1.summary())
+
+# UDF for calculating vif value
+def vif_cal(input_data, dependent_col):
+    vif_df = pd.DataFrame( columns = ['Var', 'Vif'])
+    x_vars=input_data.drop([dependent_col], axis=1)
+    xvar_names=x_vars.columns
+    for i in range(0,xvar_names.shape[0]):
+        y=x_vars[xvar_names[i]] 
+        x=x_vars[xvar_names.drop(xvar_names[i])]
+        rsq=sm.OLS(y,x).fit().rsquared  
+        vif=round(1/(1-rsq),2)
+        vif_df.loc[i] = [xvar_names[i], vif]
+    return vif_df.sort_values(by = 'Vif', axis=0, ascending=False, inplace=False)
+
+# Calculating Vif value
+vif_cal(input_data=mendel_final_df, dependent_col="actual_sales")
+#--------------------------------------------------------------------------------------------------------------------------------
 ##percentage of sales accros categor
 #    
-sns.lmplot(y='actual_sales', x='percentage_territory_actual_sales', data=mendel)
+#sns.lmplot(y='actual_sales', x='percentage_territory_actual_sales', data=mendel)
 
 #xx = ((mendel.groupby('injection_potential').actual_sales.sum())/ sum(mendel['actual_sales']) )*100
 #
@@ -376,6 +461,8 @@ sns.lmplot(y='actual_sales', x='percentage_territory_actual_sales', data=mendel)
 #
 #from sklearn.preprocessing import Imputer
 #imp = Imputer(missing_values='NaN', strategy='most_frequent', axis=0)
-#imp.fit(mendel['account_relation'])
-#mendel['account_relation'] = imp.transform(mendel['account_relation'])
-#
+##imp.fit(mendel['account_relation'])
+##mendel['account_relation'] = imp.transform(mendel['account_relation'])
+###mendel.to_csv("mendel_final_dataset.csv", index = False)
+#mendel['pal'] = mendel['pal'].map(lambda x: x.lstrip('(-').rstrip('aAbBcC'))
+
