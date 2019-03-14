@@ -115,6 +115,10 @@ mendel = mendel.apply(lambda x: x.str.lower() if(x.dtype == 'object') else x)
 dup_med = mendel.duplicated() #will return a sereis of boolean
 mendel = mendel.drop_duplicates()
 
+
+#removing a particular pattern of string in Product_Adoption_Ladder
+mendel['pal'] = mendel['pal'].str.split('(').str[0]
+
 # Total Number of missing values or NAN in each column & #percentage of missing values each column
 mendel.isnull().sum()
 round((mendel.isnull().sum()/len(mendel))*100,2)
