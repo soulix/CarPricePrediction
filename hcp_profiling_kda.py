@@ -137,7 +137,7 @@ def centile(mendel,num_var):
     var_quantile =  mendel[num_var].quantile(np.arange(0,1.01,0.01))
     print(var_quantile)
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-#total_potential_value]
+#total_potential_value
 
 #outlier treatment & handeling missing values
 #set a seaborn style of your taste
@@ -167,7 +167,7 @@ mendel["target_sales"] = mendel["target_sales"].ffill().bfill()
 
 sns.boxplot(mendel['actual_sales'])
 centile(mendel,'actual_sales')
-mendel["actual_sales"] = np.where(mendel["actual_sales"] > 133 , 133 ,mendel["actual_sales"])
+mendel["actual_sales"] = np.where(mendel["actual_sales"] > 134.00 , 134.00 ,mendel["actual_sales"])
 mendel["actual_sales"].describe()
 mendel["actual_sales"] = mendel["actual_sales"].ffill().bfill()
 mendel.isnull().sum()
@@ -187,35 +187,20 @@ mendel.isnull().sum()
 
 sns.boxplot(mendel['patients_treated_with_competitive_drug']) 
 centile(mendel,'patients_treated_with_competitive_drug') 
-mendel["patients_treated_with_competitive_drug"] = np.where(mendel["patients_treated_with_competitive_drug"] > 273 , 273 ,mendel["patients_treated_with_competitive_drug"])
+mendel["patients_treated_with_competitive_drug"] = np.where(mendel["patients_treated_with_competitive_drug"] > 225.20 , 225.20  ,mendel["patients_treated_with_competitive_drug"])
 mendel["patients_treated_with_competitive_drug"].describe()
 mendel["patients_treated_with_competitive_drug"] = mendel["patients_treated_with_competitive_drug"].ffill().bfill()
 mendel.isnull().sum()
 
-#patients_treated_with_competitive_drug
+#patients_treated_with_selling_drug
 #outlier treatment & handeling missing values
 
 sns.boxplot(mendel['patients_treated_with_selling_drug']) 
 centile(mendel,'patients_treated_with_selling_drug') 
-mendel["patients_treated_with_selling_drug"] = np.where(mendel["patients_treated_with_selling_drug"] > 86 , 86 , mendel["patients_treated_with_selling_drug"])
+mendel["patients_treated_with_selling_drug"] = np.where(mendel["patients_treated_with_selling_drug"] > 85.60 , 85.60 , mendel["patients_treated_with_selling_drug"])
 mendel["patients_treated_with_selling_drug"].describe()
 mendel["patients_treated_with_selling_drug"] = mendel["patients_treated_with_selling_drug"].ffill().bfill()
 mendel.isnull().sum()
-
-
-#market share in account
-sns.boxplot(mendel['market_share_in_account']) #no outlier
-centile(mendel,'market_share_in_account') 
-mendel["market_share_in_account"].describe()
-
-#percentage_territory_potential_sales
-sns.boxplot(mendel['percentage_territory_potential_sales']) 
-centile(mendel,'percentage_territory_potential_sales') 
-mendel["patients_treated_with_selling_drug"] = np.where(mendel["patients_treated_with_selling_drug"] > 86 , 86 , mendel["patients_treated_with_selling_drug"])
-mendel["patients_treated_with_selling_drug"].describe()
-mendel["patients_treated_with_selling_drug"] = mendel["patients_treated_with_selling_drug"].ffill().bfill()
-mendel.isnull().sum()
-
 
 #accout_relation
 ##handeling missing values  with mode.
@@ -229,7 +214,47 @@ mendel.info()
 mendel.isnull().sum()
 
 
+#only outlier check
+#market share in account
+sns.boxplot(mendel['market_share_in_account']) 
 
+mendel["market_share_in_account"] = np.where(mendel["market_share_in_account"] > 0.88 , 0.88 , mendel["market_share_in_account"])
+centile(mendel,'market_share_in_account') 
+mendel["market_share_in_account"].describe()
+
+#percentage_territory_potential_sales
+sns.boxplot(mendel['percentage_territory_potential_sales']) 
+centile(mendel,'percentage_territory_potential_sales') 
+mendel["percentage_territory_potential_sales"] = np.where(mendel["percentage_territory_potential_sales"] > 0.066 , 0.066 , mendel["percentage_territory_potential_sales"])
+mendel.isnull().sum()
+
+#percentage_territory_actual_sales
+sns.boxplot(mendel['percentage_territory_actual_sales']) 
+centile(mendel,'percentage_territory_actual_sales') 
+mendel["percentage_territory_actual_sales"] = np.where(mendel["percentage_territory_actual_sales"] > 0.068966 , 0.068966 , mendel["percentage_territory_actual_sales"])
+mendel.isnull().sum()
+
+#territory_quota
+
+sns.boxplot(mendel['territory_quota']) 
+centile(mendel,'territory_quota') 
+mendel["territory_quota"] = np.where(mendel["territory_quota"] > 3200 , 3200 , mendel["territory_quota"])
+mendel.isnull().sum()
+
+#target_sales_quota
+sns.boxplot(mendel['target_sales_quota'])
+centile(mendel,'target_sales_quota') 
+mendel["target_sales_quota"] = np.where(mendel["target_sales_quota"] > 1047 , 1047 , mendel["target_sales_quota"])
+mendel.isnull().sum()
+
+#territory_quota_attainment
+sns.boxplot(mendel['territory_quota_attainment'])
+centile(mendel,'territory_quota_attainment') 
+mendel["territory_quota_attainment"] = np.where(mendel["territory_quota_attainment"] > 1 , 1 , mendel["territory_quota_attainment"])
+mendel.isnull().sum()
+
+
+#var_quantile =  mendel['territory_quota_attainment'].quantile(np.arange(0,1.01,0.01))
 
 
 ########### EDA and Derived Metrics ###########
@@ -400,6 +425,34 @@ def vif_cal(input_data, dependent_col):
 
 # Calculating Vif value
 vif_cal(input_data=mendel_final_df, dependent_col="actual_sales")
+
+
+X_test_m6 = sm.add_constant(X_test)
+
+# Making predictions
+y_pred_m6 = lm_1.predict(X_test_m6)
+
+
+# Actual vs Predicted
+c = [i for i in range(0,358,1)]
+fig = plt.figure()
+plt.plot(c,y_test, color="blue", linewidth=2.5, linestyle="-")     #Plotting Actual
+plt.plot(c,y_pred_m6, color="red",  linewidth=2.5, linestyle="-")  #Plotting predicted
+fig.suptitle('Actual and Predicted', fontsize=20)              # Plot heading 
+plt.xlabel('Index', fontsize=18)                               # X-label
+plt.ylabel('actual_sales', fontsize=16) 
+
+
+# Error terms
+c = [i for i in range(0,358,1)]
+fig = plt.figure()
+plt.plot(c,y_test-y_pred_m6, color="blue", linewidth=2.5, linestyle="-")
+fig.suptitle('Error Terms', fontsize=20)              # Plot heading 
+plt.xlabel('Index', fontsize=18)                      # X-label
+plt.ylabel('residuals', fontsize=16)       
+
+
+
 #--------------------------------------------------------------------------------------------------------------------------------
 ##percentage of sales accros categor
 #    
