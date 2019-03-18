@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Feb 20 10:30:50 2019
-
 @author: 713538
 """
 
@@ -21,7 +20,7 @@ Created on Wed Feb 20 10:30:50 2019
 import numpy as np #linear algebra
 import pandas as pd #import pandas
 import matplotlib.pyplot as plt #eda
-from scipy import stats #imputing missing values
+#from scipy import stats #imputing missing values
 import seaborn as sns # the commonly used alias for seaborn is sns
 from sklearn.model_selection import train_test_split
 import calendar
@@ -136,6 +135,12 @@ round((mendel.isnull().sum()/len(mendel))*100,2)
 def centile(mendel,num_var):
     var_quantile =  mendel[num_var].quantile(np.arange(0,1.01,0.01))
     print(var_quantile)
+    
+
+def outlier_treatment(num_outlier_treat_var, value):
+    mendel[num_outlier_treat_var] = np.where(mendel[num_outlier_treat_var] > value ,value ,mendel[num_outlier_treat_var])
+    
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 #total_potential_value
 
@@ -144,9 +149,8 @@ def centile(mendel,num_var):
 sns.set_style("whitegrid")
 sns.boxplot(mendel['total_potential_value'])
 centile(mendel,'total_potential_value')
-mendel["total_potential_value"] = np.where(mendel["total_potential_value"] > 600, 600 ,mendel["total_potential_value"])
-#ffill() will propagate the closest value forwards through nans and bfill() will propagate the closest value backwards through nans.
-#later we will do it with fancyimpute
+outlier_treatment('total_potential_value',600)
+
 #handeling missing values of total_potential_value
 mendel["total_potential_value"] = mendel["total_potential_value"].ffill().bfill()
 mendel["total_potential_value"].describe()
@@ -156,7 +160,7 @@ mendel["total_potential_value"].describe()
 #outlier treatment & handeling missing values
 sns.boxplot(mendel['target_sales'])
 centile(mendel,'target_sales')
-mendel["target_sales"] = np.where(mendel["target_sales"] > 165 , 165  ,mendel["target_sales"])
+outlier_treatment('target_sales',165)
 mendel["target_sales"].describe()
 mendel.isnull().sum()
 mendel["target_sales"] = mendel["target_sales"].ffill().bfill()
@@ -167,7 +171,7 @@ mendel["target_sales"] = mendel["target_sales"].ffill().bfill()
 
 sns.boxplot(mendel['actual_sales'])
 centile(mendel,'actual_sales')
-mendel["actual_sales"] = np.where(mendel["actual_sales"] > 134.00 , 134.00 ,mendel["actual_sales"])
+outlier_treatment('actual_sales',134.00)
 mendel["actual_sales"].describe()
 mendel["actual_sales"] = mendel["actual_sales"].ffill().bfill()
 mendel.isnull().sum()
@@ -187,7 +191,7 @@ mendel.isnull().sum()
 
 sns.boxplot(mendel['patients_treated_with_competitive_drug']) 
 centile(mendel,'patients_treated_with_competitive_drug') 
-mendel["patients_treated_with_competitive_drug"] = np.where(mendel["patients_treated_with_competitive_drug"] > 225.20 , 225.20  ,mendel["patients_treated_with_competitive_drug"])
+outlier_treatment('patients_treated_with_competitive_drug',225.20)
 mendel["patients_treated_with_competitive_drug"].describe()
 mendel["patients_treated_with_competitive_drug"] = mendel["patients_treated_with_competitive_drug"].ffill().bfill()
 mendel.isnull().sum()
@@ -197,7 +201,7 @@ mendel.isnull().sum()
 
 sns.boxplot(mendel['patients_treated_with_selling_drug']) 
 centile(mendel,'patients_treated_with_selling_drug') 
-mendel["patients_treated_with_selling_drug"] = np.where(mendel["patients_treated_with_selling_drug"] > 85.60 , 85.60 , mendel["patients_treated_with_selling_drug"])
+outlier_treatment('patients_treated_with_selling_drug',85.60)
 mendel["patients_treated_with_selling_drug"].describe()
 mendel["patients_treated_with_selling_drug"] = mendel["patients_treated_with_selling_drug"].ffill().bfill()
 mendel.isnull().sum()
@@ -217,49 +221,44 @@ mendel.isnull().sum()
 #only outlier check
 #market share in account
 sns.boxplot(mendel['market_share_in_account']) 
-
-mendel["market_share_in_account"] = np.where(mendel["market_share_in_account"] > 0.88 , 0.88 , mendel["market_share_in_account"])
+outlier_treatment('market_share_in_account',0.88)
 centile(mendel,'market_share_in_account') 
 mendel["market_share_in_account"].describe()
 
 #percentage_territory_potential_sales
 sns.boxplot(mendel['percentage_territory_potential_sales']) 
 centile(mendel,'percentage_territory_potential_sales') 
-mendel["percentage_territory_potential_sales"] = np.where(mendel["percentage_territory_potential_sales"] > 0.066 , 0.066 , mendel["percentage_territory_potential_sales"])
+outlier_treatment('percentage_territory_potential_sales',0.066)
 mendel.isnull().sum()
 
 #percentage_territory_actual_sales
 sns.boxplot(mendel['percentage_territory_actual_sales']) 
 centile(mendel,'percentage_territory_actual_sales') 
-mendel["percentage_territory_actual_sales"] = np.where(mendel["percentage_territory_actual_sales"] > 0.068966 , 0.068966 , mendel["percentage_territory_actual_sales"])
+outlier_treatment('percentage_territory_actual_sales',0.068966)
 mendel.isnull().sum()
 
 #territory_quota
 
 sns.boxplot(mendel['territory_quota']) 
 centile(mendel,'territory_quota') 
-mendel["territory_quota"] = np.where(mendel["territory_quota"] > 3200 , 3200 , mendel["territory_quota"])
+outlier_treatment('territory_quota',3200)
 mendel.isnull().sum()
 
 #target_sales_quota
 sns.boxplot(mendel['target_sales_quota'])
 centile(mendel,'target_sales_quota') 
-mendel["target_sales_quota"] = np.where(mendel["target_sales_quota"] > 1047 , 1047 , mendel["target_sales_quota"])
+outlier_treatment('target_sales_quota',1047)
 mendel.isnull().sum()
 
 #territory_quota_attainment
 sns.boxplot(mendel['territory_quota_attainment'])
 centile(mendel,'territory_quota_attainment') 
-mendel["territory_quota_attainment"] = np.where(mendel["territory_quota_attainment"] > 1 , 1 , mendel["territory_quota_attainment"])
+outlier_treatment('territory_quota_attainment',1)
 mendel.isnull().sum()
-
 
 #var_quantile =  mendel['territory_quota_attainment'].quantile(np.arange(0,1.01,0.01))
 
-
 ########### EDA and Derived Metrics ###########
-
-
 # Univariate analysis:-  frequency and disctribution plot of each categorical and numeric variables respectively
 
 # subplots
@@ -358,7 +357,7 @@ plt.show()
 
 
 
-############# ReScaling , Sampling and Dummy variables creation and feature selection for model#####################################
+############# Scaling , Sampling and Dummy variables creation and feature selection for model#####################################
 
 #--------------------------------------------------------------------------------------------------------------------------------
 #defining a normalisation function : ReScaling
@@ -380,7 +379,7 @@ cols_cat = ['account_relation','injection_potential','pal','competitive_situatio
 cat_mendel = mendel.loc[:,cols_cat]
 #Creating dummy varibles for categorical variables
 
-# we can use drop_first = True to drop the first column from status dataframe.
+# we can use drop_first = True to drop the first column from dummy dataframe.
 cat_mendel_dummy = pd.get_dummies(cat_mendel,drop_first=True)
 
 #creating the final data set which wre going to throw to the model
@@ -410,6 +409,7 @@ lm_1 = sm.OLS(y_train,X_train).fit()
 #Let's see the summary of our first linear model
 print(lm_1.summary())
 
+#--------------------------------------------------------------------------------------------------
 # UDF for calculating vif value
 def vif_cal(input_data, dependent_col):
     vif_df = pd.DataFrame( columns = ['Var', 'Vif'])
@@ -423,6 +423,7 @@ def vif_cal(input_data, dependent_col):
         vif_df.loc[i] = [xvar_names[i], vif]
     return vif_df.sort_values(by = 'Vif', axis=0, ascending=False, inplace=False)
 
+#----------------------------------------------------------------------------------------------------
 # Calculating Vif value
 vif_cal(input_data=mendel_final_df, dependent_col="actual_sales")
 
@@ -431,6 +432,184 @@ X_test_m6 = sm.add_constant(X_test)
 
 # Making predictions
 y_pred_m6 = lm_1.predict(X_test_m6)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Actual vs Predicted
@@ -518,4 +697,3 @@ plt.ylabel('residuals', fontsize=16)
 ##mendel['account_relation'] = imp.transform(mendel['account_relation'])
 ###mendel.to_csv("mendel_final_dataset.csv", index = False)
 #mendel['pal'] = mendel['pal'].map(lambda x: x.lstrip('(-').rstrip('aAbBcC'))
-
